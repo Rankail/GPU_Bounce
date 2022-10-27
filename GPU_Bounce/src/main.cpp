@@ -38,7 +38,7 @@ bool prevTime = 0;
 float speed = .2f;
 bool reverse = false;
 
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
 	if (action == GLFW_PRESS && key == GLFW_KEY_SPACE)
 	{
@@ -72,7 +72,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	}
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 	std::cout << "Wurzel von Anzahl Punkte:" << std::endl;
 	std::cin >> POINT_COUNT_ROOT;
@@ -90,14 +90,13 @@ int main(int argc, char** argv)
 	COMPUTE_SIZE = (int)ceil(COUNT_SQUARE_ROOT / (float)WORKGROUP_SIZE);
 	COUNT = POINT_COUNT_ROOT * POINT_COUNT_ROOT;
 
-
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Compute Shader", nullptr, nullptr);
+	GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Compute Shader", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 
 	glfwSetKeyCallback(window, keyCallback);
@@ -110,14 +109,11 @@ int main(int argc, char** argv)
 		1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
 		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
 		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-		-1.0f, 1.0f, 0.0f, 0.0f, 1.0f
-	};
+		-1.0f, 1.0f, 0.0f, 0.0f, 1.0f};
 
 	GLuint indices[] = {
 		0, 1, 3,
-		1, 2, 3
-	};
-
+		1, 2, 3};
 
 	GLuint vao;
 	glCreateVertexArrays(1, &vao);
@@ -129,6 +125,7 @@ int main(int argc, char** argv)
 
 	glBindVertexArray(vao);
 
+	// initializes data that will be send to gpu
 	std::vector<GLfloat> data(COUNT * 4);
 	for (int i = 0; i < COUNT * 4; i += 4)
 	{
@@ -148,7 +145,7 @@ int main(int argc, char** argv)
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
@@ -175,20 +172,6 @@ int main(int argc, char** argv)
 		double curTime = glfwGetTime();
 		double dt = curTime - prevTime;
 		prevTime = curTime;
-		count += (float)dt;
-
-		fpss.push_back((float)dt);
-		float sum = 0;
-		for (auto f : fpss)
-			sum += f;
-		if (sum > 1.f)
-			fpss.pop_front();
-
-		if (count >= .2f)
-		{
-			std::cout << 1. / (sum / fpss.size()) << " FPS" << std::endl;
-			count = 0.f;
-		}
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -197,12 +180,14 @@ int main(int argc, char** argv)
 		if (!paused)
 		{
 			computeShader.Use();
+			// vertex buffer is used as shader storage buffer
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vbo);
 			computeShader.SetFloat("deltaTime", (float)dt * speed * (1 - reverse * 2));
 			glDispatchCompute(COMPUTE_SIZE, COMPUTE_SIZE, 1);
 			glMemoryBarrier(GL_ALL_BARRIER_BITS);
 		}
 
+		// computed data is directly used as vertex buffer
 		graphicShader.Use();
 		glDrawArrays(GL_POINTS, 0, (GLsizei)(data.size() / 4));
 

@@ -29,6 +29,7 @@ void main()
 	particle.pos.x = particle.pos.x + cos(particle.angle) * deltaTime;
 	particle.pos.y = particle.pos.y + sin(particle.angle) * deltaTime;
 
+	//reflection on borders
 	if (particle.pos.x > 1.0)
 	{
 		particle.pos.x = 2.0 - particle.pos.x;
