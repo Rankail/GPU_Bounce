@@ -1,0 +1,77 @@
+#version 460 core
+
+struct Particle
+{
+	vec2 pos;
+	float angle;
+	float colorIndex;
+};
+
+layout(std430, binding = 1) buffer particleBuffer
+{
+	Particle particles[];
+};
+
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+uniform float deltaTime;
+
+#define PI 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480
+
+void main()
+{
+	ivec2 id2 = ivec2(gl_GlobalInvocationID.xy);
+	ivec2 dims = ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
+	uint index = id2.y * dims.x + id2.x;
+
+	Particle particle = particles[index];
+
+	particle.pos.x = particle.pos.x + cos(particle.angle) * deltaTime;
+	particle.pos.y = particle.pos.y + sin(particle.angle) * deltaTime;
+
+	if (particle.pos.x > 1.0)
+	{
+		particle.pos.x = 2.0 - particle.pos.x;
+		particle.angle = PI - particle.angle;
+		particle.colorIndex += sign(deltaTime);
+	}
+	else if (particle.pos.x < -1.0)
+	{
+		particle.pos.x = -2.0 - particle.pos.x;
+		particle.angle = PI - particle.angle;
+		particle.colorIndex += sign(deltaTime);
+	}
+
+	if (particle.pos.y > 1.0)
+	{
+		particle.pos.y = 2.0 - particle.pos.y;
+		particle.angle = 2 * PI - particle.angle;
+		particle.colorIndex += sign(deltaTime);
+	}
+	else if (particle.pos.y < -1.0)
+	{
+		particle.pos.y = -2.0 - particle.pos.y;
+		particle.angle = 2 * PI - particle.angle;
+		particle.colorIndex += sign(deltaTime);
+	}
+
+	if (particle.colorIndex >= 6.)
+	{
+		particle.colorIndex -= 6.;
+	}
+	else if (particle.colorIndex < 0.)
+	{
+		particle.colorIndex += 6.;
+	}
+
+	if (particle.angle > PI)
+	{
+		particle.angle -= 2*PI;
+	}
+	else if (particle.angle < - PI)
+	{
+		particle.angle += 2*PI;
+	}
+
+	particles[index] = particle;
+}
