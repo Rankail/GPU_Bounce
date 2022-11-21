@@ -6,7 +6,7 @@ I only tested it _Visual Studio 2022_ on _Windows 10_ and _Windows 11_.
 
 ## Requirements
 - Visual Studio
-- Premake 5
+- [Premake 5](https://premake.github.io/)
 
 ## Setup
 ```
