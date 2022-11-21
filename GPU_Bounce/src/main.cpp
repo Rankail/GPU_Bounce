@@ -5,6 +5,7 @@
 #include <queue>
 #include <list>
 
+int POINT_COUNT;
 int POINT_COUNT_ROOT;
 int COMPUTE_SIZE;
 int COUNT;
@@ -74,8 +75,11 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 int main(int argc, char **argv)
 {
-	std::cout << "Wurzel von Anzahl Punkte:" << std::endl;
-	std::cin >> POINT_COUNT_ROOT;
+	std::cout << "Anzahl Punkte (wird abgerundet zur naechsten Quadratzahl):" << std::endl;
+	std::cin >> POINT_COUNT;
+	POINT_COUNT_ROOT = std::sqrt(POINT_COUNT);
+	POINT_COUNT = POINT_COUNT_ROOT * POINT_COUNT_ROOT;
+	std::cout << "Wirkliche Anzahl Punkte: " << POINT_COUNT << std::endl;
 
 	std::cout << "Punkt Groesse:" << std::endl;
 	int POINT_SIZE;
@@ -88,7 +92,6 @@ int main(int argc, char **argv)
 	}
 
 	COMPUTE_SIZE = (int)ceil(COUNT_SQUARE_ROOT / (float)WORKGROUP_SIZE);
-	COUNT = POINT_COUNT_ROOT * POINT_COUNT_ROOT;
 
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -126,10 +129,10 @@ int main(int argc, char **argv)
 	glBindVertexArray(vao);
 
 	// initializes data that will be send to gpu
-	std::vector<GLfloat> data(COUNT * 4);
-	for (int i = 0; i < COUNT * 4; i += 4)
+	std::vector<GLfloat> data(POINT_COUNT * 4);
+	for (int i = 0; i < POINT_COUNT * 4; i += 4)
 	{
-		float angle = (float)i / (float)(COUNT * 4.f) * 2.f * 3.1415926535f;
+		float angle = (float)i / (float)(POINT_COUNT * 4.f) * 2.f * 3.1415926535f;
 		data[i + 0] = 0.f;
 		data[i + 1] = 0.f;
 		data[i + 2] = angle;
