@@ -7,7 +7,7 @@ in float v_ColorIndex;
 
 void main()
 {
-	if (v_ColorIndex == 0.f) { FragColor = vec4(1.0, 0.0, 0.0, 1.0); }
+	if (v_ColorIndex == 0.f) { FragColor = vec4(1.0, 1.0, 1.0, 1.0); }
 	else if (v_ColorIndex == 1.f) { FragColor = vec4(0.0, 1.0, 0.0, 1.0); }
 	else if (v_ColorIndex == 2.f) { FragColor = vec4(0.0, 0.0, 1.0, 1.0); }
 	else if (v_ColorIndex == 3.f) { FragColor = vec4(1.0, 1.0, 0.0, 1.0); }

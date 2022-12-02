@@ -8,26 +8,27 @@
 int POINT_COUNT;
 int POINT_COUNT_ROOT;
 int COMPUTE_SIZE;
-int COUNT;
 
 constexpr unsigned int COUNT_SQUARE_ROOT = 3163;
 constexpr unsigned int WORKGROUP_SIZE = 32;
 
-constexpr unsigned int WIDTH = 800;
-constexpr unsigned int HEIGHT = 800;
+int WIDTH;
+int HEIGHT;
+float ASPECT_RATIO;
 
 GLuint vbo;
 
 void resetData()
 {
-	std::vector<GLfloat> data(COUNT * 4);
-	for (int i = 0; i < COUNT * 4; i += 4)
+	std::vector<GLfloat> data(POINT_COUNT * 4);
+	for (int i = 0; i < POINT_COUNT * 4; i += 4)
 	{
-		float angle = (float)i / (float)(COUNT * 4.f) * 2.f * 3.1415926535f;
+		float angle = (float)i / (float)(POINT_COUNT * 4.f) * 2.f * 3.1415926535f;
 		data[i + 0] = 0.f;
 		data[i + 1] = 0.f;
 		data[i + 2] = angle;
-		data[i + 3] = 0.f;
+		int n = 0;
+		data[i + 3] = *(unsigned*)(&n);
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -77,7 +78,7 @@ int main(int argc, char **argv)
 {
 	std::cout << "Anzahl Punkte (wird abgerundet zur naechsten Quadratzahl):" << std::endl;
 	std::cin >> POINT_COUNT;
-	POINT_COUNT_ROOT = std::sqrt(POINT_COUNT);
+	POINT_COUNT_ROOT = (int)std::sqrt(POINT_COUNT);
 	POINT_COUNT = POINT_COUNT_ROOT * POINT_COUNT_ROOT;
 	std::cout << "Wirkliche Anzahl Punkte: " << POINT_COUNT << std::endl;
 
@@ -99,7 +100,14 @@ int main(int argc, char **argv)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-	GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Compute Shader", nullptr, nullptr);
+	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
+	WIDTH = vidmode->width;
+	HEIGHT = vidmode->height;
+	ASPECT_RATIO = (float)WIDTH / (float)HEIGHT;
+
+	GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Compute Shader", monitor, nullptr);
+
 	glfwMakeContextCurrent(window);
 
 	glfwSetKeyCallback(window, keyCallback);
@@ -186,6 +194,8 @@ int main(int argc, char **argv)
 			// vertex buffer is used as shader storage buffer
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vbo);
 			computeShader.SetFloat("deltaTime", (float)dt * speed * (1 - reverse * 2));
+			computeShader.SetFloat("time", (float)curTime);
+			computeShader.SetFloat("aspectRatio", ASPECT_RATIO);
 			glDispatchCompute(COMPUTE_SIZE, COMPUTE_SIZE, 1);
 			glMemoryBarrier(GL_ALL_BARRIER_BITS);
 		}

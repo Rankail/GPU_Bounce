@@ -4,7 +4,7 @@ struct Particle
 {
 	vec2 pos;
 	float angle;
-	float colorIndex;
+	int colorIndex;
 };
 
 layout(std430, binding = 1) buffer particleBuffer
@@ -15,8 +15,34 @@ layout(std430, binding = 1) buffer particleBuffer
 layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 uniform float deltaTime;
+uniform float aspectRatio;
+
+uniform float time;
 
 #define PI 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480
+
+uint hash(uint x) {
+    x += ( x << 10u );
+    x ^= ( x >>  6u );
+    x += ( x <<  3u );
+    x ^= ( x >> 11u );
+    x += ( x << 15u );
+    return x;
+}
+
+uint hash( uvec2 v ) { return hash( v.x ^ hash(v.y)                         ); }
+uint hash( uvec3 v ) { return hash( v.x ^ hash(v.y) ^ hash(v.z)             ); }
+uint hash( uvec4 v ) { return hash( v.x ^ hash(v.y) ^ hash(v.z) ^ hash(v.w) ); }
+
+float floatConstruct(uint m) {
+    m &= 0x007FFFFFu;
+    m |= 0x3F800000u;     
+    return uintBitsToFloat(m) - 1.0;                        
+}
+
+float rand(vec3 v) {
+	return floatConstruct(hash(floatBitsToUint(v)));
+}
 
 void main()
 {
@@ -26,43 +52,42 @@ void main()
 
 	Particle particle = particles[index];
 
-	particle.pos.x = particle.pos.x + cos(particle.angle) * deltaTime;
+	particle.pos.x = particle.pos.x + cos(particle.angle) * deltaTime / aspectRatio;
 	particle.pos.y = particle.pos.y + sin(particle.angle) * deltaTime;
 
+	bool bounced = false;
+
 	//reflection on borders
-	if (particle.pos.x > 1.0)
+	if (particle.pos.x > 1)
 	{
 		particle.pos.x = 2.0 - particle.pos.x;
 		particle.angle = PI - particle.angle;
-		particle.colorIndex += sign(deltaTime);
+		bounced = true;
 	}
 	else if (particle.pos.x < -1.0)
 	{
 		particle.pos.x = -2.0 - particle.pos.x;
 		particle.angle = PI - particle.angle;
-		particle.colorIndex += sign(deltaTime);
+		bounced = true;
 	}
 
 	if (particle.pos.y > 1.0)
 	{
 		particle.pos.y = 2.0 - particle.pos.y;
 		particle.angle = 2 * PI - particle.angle;
-		particle.colorIndex += sign(deltaTime);
+		bounced = true;
 	}
 	else if (particle.pos.y < -1.0)
 	{
 		particle.pos.y = -2.0 - particle.pos.y;
 		particle.angle = 2 * PI - particle.angle;
-		particle.colorIndex += sign(deltaTime);
+		bounced = true;
 	}
 
-	if (particle.colorIndex >= 6.)
-	{
-		particle.colorIndex -= 6.;
-	}
-	else if (particle.colorIndex < 0.)
-	{
-		particle.colorIndex += 6.;
+	if (bounced) {
+		particle.colorIndex += int(sign(deltaTime));
+		//particle.colorIndex = (particle.colorIndex + 6) % 6;
+		particle.angle += rand(vec3(particle.pos.xy, time)) * 0.1;
 	}
 
 	if (particle.angle > PI)
